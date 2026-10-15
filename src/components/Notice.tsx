@@ -16,6 +16,7 @@ const toneMarker: Record<Tone, string> = {
   danger: "⚠",
   success: "✓",
   ai: "AI",
+  demo: "★",
 };
 
 export function Notice({ tone = "neutral", marker, title, children, onClose }: NoticeProps) {

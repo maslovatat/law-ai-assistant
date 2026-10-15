@@ -1,31 +1,30 @@
-import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
-import { StoreProvider } from "./CaseStore";
+import { HashRouter, Route, Routes } from "react-router-dom";
+import { ShipmentStoreProvider } from "./ShipmentStore";
 import { AppShell } from "./AppShell";
-import { LandingPage } from "../pages/LandingPage";
-import { UserCasesPage } from "../pages/UserCasesPage";
-import { NewCasePage } from "../pages/NewCasePage";
-import { UserCasePage } from "../pages/UserCasePage";
-import { LawyerQueuePage } from "../pages/LawyerQueuePage";
-import { LawyerCasePage } from "../pages/LawyerCasePage";
+import { DashboardPage } from "../pages/DashboardPage";
+import { CreateShipmentPage } from "../pages/CreateShipmentPage";
+import { ShipmentsPage } from "../pages/ShipmentsPage";
+import { ShipmentDetailsPage } from "../pages/ShipmentDetailsPage";
+import { DraftsPage } from "../pages/DraftsPage";
+import { ProfilePage } from "../pages/ProfilePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 
 export function App() {
   return (
-    <StoreProvider>
+    <ShipmentStoreProvider>
       <HashRouter>
         <AppShell>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/cases" element={<UserCasesPage />} />
-            <Route path="/cases/new" element={<NewCasePage />} />
-            <Route path="/cases/:caseId" element={<UserCasePage />} />
-            <Route path="/lawyer" element={<Navigate to="/lawyer/queue" replace />} />
-            <Route path="/lawyer/queue" element={<LawyerQueuePage />} />
-            <Route path="/lawyer/cases/:caseId" element={<LawyerCasePage />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/create" element={<CreateShipmentPage />} />
+            <Route path="/shipments" element={<ShipmentsPage />} />
+            <Route path="/shipments/:id" element={<ShipmentDetailsPage />} />
+            <Route path="/drafts" element={<DraftsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </AppShell>
       </HashRouter>
-    </StoreProvider>
+    </ShipmentStoreProvider>
   );
 }

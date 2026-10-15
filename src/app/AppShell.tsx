@@ -1,93 +1,69 @@
 import type { ReactNode } from "react";
 import { NavLink, Link } from "react-router-dom";
-import { useStore } from "./CaseStore";
-import { mockNotice } from "../types/labels";
+import { useStore } from "./ShipmentStore";
+import { demoNoticeText, mockDisclaimer } from "../types/labels";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { state, dispatch } = useStore();
-  const isLawyer = state.role === "lawyer";
 
   return (
     <div className="app-shell">
       <header className="app-header">
         <div className="app-header__inner">
           <Link to="/" className="app-brand">
-            <span className="app-brand__name">Сопровождение юридических дел</span>
+            <span className="app-brand__name">Досудебные претензии через Почту России</span>
             <span className="app-brand__mode">Демонстрационный прототип</span>
           </Link>
 
           <nav className="app-nav" aria-label="Основная навигация">
-            {isLawyer ? (
-              <>
-                <NavLink
-                  to="/lawyer/queue"
-                  className={({ isActive }) =>
-                    `app-nav__link ${isActive ? "app-nav__link--active" : ""}`
-                  }
-                >
-                  Очередь дел
-                </NavLink>
-                <NavLink
-                  to="/lawyer/cases/LC-2026-001"
-                  className={({ isActive }) =>
-                    `app-nav__link ${isActive ? "app-nav__link--active" : ""}`
-                  }
-                >
-                  Дело LC-2026-001
-                </NavLink>
-              </>
-            ) : (
-              <>
-                <NavLink
-                  to="/cases"
-                  className={({ isActive }) =>
-                    `app-nav__link ${isActive ? "app-nav__link--active" : ""}`
-                  }
-                >
-                  Мои дела
-                </NavLink>
-                <NavLink
-                  to="/cases/new"
-                  className={({ isActive }) =>
-                    `app-nav__link ${isActive ? "app-nav__link--active" : ""}`
-                  }
-                >
-                  Новое дело
-                </NavLink>
-              </>
-            )}
+            <NavLink to="/" className={({ isActive }) => `app-nav__link ${isActive ? "app-nav__link--active" : ""}`}>
+              Главная
+            </NavLink>
+            <NavLink to="/create" className={({ isActive }) => `app-nav__link ${isActive ? "app-nav__link--active" : ""}`}>
+              Новая отправка
+            </NavLink>
+            <NavLink to="/shipments" className={({ isActive }) => `app-nav__link ${isActive ? "app-nav__link--active" : ""}`}>
+              Отправления
+            </NavLink>
+            <NavLink to="/drafts" className={({ isActive }) => `app-nav__link ${isActive ? "app-nav__link--active" : ""}`}>
+              Черновики
+            </NavLink>
+            <NavLink to="/profile" className={({ isActive }) => `app-nav__link ${isActive ? "app-nav__link--active" : ""}`}>
+              Профиль
+            </NavLink>
           </nav>
 
-          <div className="row">
-            <label className="field__label" htmlFor="role-switcher">
-              Роль
-            </label>
-            <select
-              id="role-switcher"
-              className="select"
-              style={{ width: "auto" }}
-              value={state.role}
-              onChange={(event) => dispatch({ type: "setRole", role: event.target.value as "user" | "lawyer" })}
-            >
-              <option value="user">Пользователь</option>
-              <option value="lawyer">Юрист</option>
-            </select>
-            <button type="button" className="btn btn--sm" onClick={() => dispatch({ type: "resetDemo" })}>
-              Сбросить демо
-            </button>
-          </div>
+          <button type="button" className="btn btn--sm" onClick={() => dispatch({ type: "resetDemo" })}>
+            Сбросить демо
+          </button>
         </div>
       </header>
 
-      <main className="app-main">{children}</main>
+      <main className="app-main">
+        {state.notice ? (
+          <div className="notice" role="status">
+            <span className="notice__marker">i</span>
+            <div>
+              <strong>{state.notice.title}</strong>
+              <br />
+              {state.notice.message}
+            </div>
+            <button
+              type="button"
+              className="notice__close"
+              onClick={() => dispatch({ type: "dismissNotice" })}
+              aria-label="Закрыть уведомление"
+            />
+          </div>
+        ) : null}
+
+        {children}
+      </main>
 
       <footer className="app-footer">
         <div className="app-footer__inner">
-          <span>{mockNotice}</span>
-          <span>
-            Режим: {isLawyer ? "Кабинет юриста" : "Пользователь"}. Настоящей авторизации нет — роль переключается в
-            демонстрационных целях.
-          </span>
+          <span>{demoNoticeText}</span>
+          <span>{mockDisclaimer}</span>
         </div>
       </footer>
     </div>

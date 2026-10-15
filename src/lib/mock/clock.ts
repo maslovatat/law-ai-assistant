@@ -15,6 +15,8 @@ export interface DemoDate {
 export const DEMO_START_DATE = "2026-10-05";
 
 export function formatDisplayDate(iso: string): string {
+  if (!iso) return "—";
+  if (iso.includes(".")) return iso;
   const [year, month, day] = iso.split("-");
   return `${day}.${month}.${year}`;
 }
@@ -38,9 +40,12 @@ export function isBefore(a: string, b: string): boolean {
   return a < b;
 }
 
-/** Дни до срока; отрицательное значение означает, что срок истёк. */
 export function daysUntil(deadlineIso: string, todayIso: string): number {
   const deadline = new Date(`${deadlineIso}T00:00:00Z`).getTime();
   const today = new Date(`${todayIso}T00:00:00Z`).getTime();
   return Math.round((deadline - today) / MS_PER_DAY);
+}
+
+export function nowTimestamp(date: string): string {
+  return `${date}T10:00:00`;
 }

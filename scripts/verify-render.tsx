@@ -1,75 +1,67 @@
 import { renderToString } from "react-dom/server";
 import { createElement } from "react";
-import { Route, Routes, StaticRouter } from "react-router";
-import { StoreProvider } from "../src/app/CaseStore";
+import { Route, Routes, StaticRouter } from "react-router-dom";
+import { ShipmentStoreProvider } from "../src/app/ShipmentStore";
 import { AppShell } from "../src/app/AppShell";
-import { LandingPage } from "../src/pages/LandingPage";
-import { UserCasesPage } from "../src/pages/UserCasesPage";
-import { NewCasePage } from "../src/pages/NewCasePage";
-import { UserCasePage } from "../src/pages/UserCasePage";
-import { LawyerQueuePage } from "../src/pages/LawyerQueuePage";
-import { LawyerCasePage } from "../src/pages/LawyerCasePage";
+import { DashboardPage } from "../src/pages/DashboardPage";
+import { CreateShipmentPage } from "../src/pages/CreateShipmentPage";
+import { ShipmentsPage } from "../src/pages/ShipmentsPage";
+import { ShipmentDetailsPage } from "../src/pages/ShipmentDetailsPage";
+import { DraftsPage } from "../src/pages/DraftsPage";
+import { ProfilePage } from "../src/pages/ProfilePage";
 import { NotFoundPage } from "../src/pages/NotFoundPage";
 import { Notice } from "../src/components/Notice";
 import { Card } from "../src/components/Card";
 import { Button } from "../src/components/Button";
-import { Dialog } from "../src/components/Dialog";
-import { Tabs } from "../src/components/Tabs";
+import { ConfirmDialog } from "../src/components/shipment/ConfirmDialog";
+import { StatusBadge } from "../src/components/shipment/StatusBadge";
+import { ShipmentTimeline } from "../src/components/shipment/ShipmentTimeline";
+import { EmptyState } from "../src/components/shipment/EmptyState";
+import { PrototypeNotice } from "../src/components/shipment/PrototypeNotice";
 import { KeyValueList } from "../src/components/KeyValueList";
-import { PrototypeNotice, MockSimulationNotice } from "../src/components/PrototypeNotice";
 
 /**
  * Дымовой тест рендеринга: проверяет, что все страницы и компоненты
  * отображаются без ошибок. Запуск: npm run test:render
  */
 
-const routes = [
+type RouteDef = {
+  path: string;
+  element: any;
+  markers?: string[];
+  params?: Record<string, string>;
+};
+
+const routes: RouteDef[] = [
   {
     path: "/",
-    element: LandingPage,
-    markers: ["Юридические дела — от проблемы до результата", "Открыть прототип", "Опишите ситуацию"],
+    element: DashboardPage,
+    markers: ["Досудебные претензии через Почту России", "Отправить претензию", "Мои черновики"],
   },
   {
-    path: "/cases",
-    element: UserCasesPage,
-    markers: ["Мои дела", "LC-2026-001", "LC-2026-002", "Противоречие в данных о покупке"],
+    path: "/create",
+    element: CreateShipmentPage,
+    markers: ["Новое отправление", "Загрузите PDF", "Документ", "Отправитель и получатель", "Отправка"],
   },
   {
-    path: "/cases/new",
-    element: NewCasePage,
-    markers: ["Опишите, что произошло", "Создать дело и начать интервью"],
+    path: "/shipments",
+    element: ShipmentsPage,
+    markers: ["Отправления", "Создать отправление"],
   },
   {
-    path: "/cases/:caseId",
-    element: UserCasePage,
-    params: { caseId: "LC-2026-001" },
-    markers: ["Проверка юристом", "Что ожидается сейчас", "Что мы узнали", "Документы дела", "Проверка"],
+    path: "/shipments/new",
+    element: ShipmentDetailsPage,
+    markers: ["Отправление не найдено"],
   },
   {
-    path: "/cases/:caseId",
-    element: UserCasePage,
-    params: { caseId: "LC-2026-002" },
-    markers: ["Обнаружено противоречие", "Чек (копия).pdf", "Уточнить дату покупки", "10.08.2026", "12.08.2026"],
+    path: "/drafts",
+    element: DraftsPage,
+    markers: ["Черновики"],
   },
   {
-    path: "/lawyer/queue",
-    element: LawyerQueuePage,
-    markers: ["Кабинет юриста", "Очередь", "Открыть дело"],
-  },
-  {
-    path: "/lawyer/cases/:caseId",
-    element: LawyerCasePage,
-    params: { caseId: "LC-2026-001" },
-    markers: [
-      "Краткое описание",
-      "Что было сделано по делу",
-      "История дела",
-      "Почему дело передано",
-      "Предложение AI и решение юриста",
-      "Действия юриста",
-      "Проверка",
-      "Общение",
-    ],
+    path: "/profile",
+    element: ProfilePage,
+    markers: ["Профиль отправителя", "Сохранить"],
   },
   { path: "/unknown", element: NotFoundPage, markers: ["Страница не найдена"] },
 ];
@@ -90,7 +82,7 @@ for (const route of routes) {
         StaticRouter,
         { location: path } as never,
         createElement(
-          StoreProvider,
+          ShipmentStoreProvider,
           null,
           createElement(
             AppShell,
@@ -130,17 +122,18 @@ const components = [
   ["Notice", Notice, { tone: "attention" as const, title: "Проверка" }, "Уведомление"],
   ["Card", Card, { title: "Карточка" }, "Содержимое"],
   ["Button", Button, { children: "Кнопка" }, undefined],
-  ["Dialog", Dialog, { open: true, title: "Диалог", confirmLabel: "ОК", onConfirm: () => {}, onCancel: () => {} }, "Содержимое"],
-  ["Tabs", Tabs, { items: [{ id: "a", label: "A" }], active: "a", onChange: () => {} }, undefined],
+  ["ConfirmDialog", ConfirmDialog, { open: true, title: "Диалог", confirmLabel: "ОК", onConfirm: () => {}, onCancel: () => {} }, "Содержимое"],
+  ["StatusBadge", StatusBadge, { status: "DELIVERED" }, undefined],
+  ["ShipmentTimeline", ShipmentTimeline, { events: [] }, undefined],
+  ["EmptyState", EmptyState, { title: "Пусто" }, undefined],
+  ["PrototypeNotice", PrototypeNotice, { variant: "inline" }, undefined],
   ["KeyValueList", KeyValueList, { rows: [{ label: "Ключ", value: "Значение" }] }, undefined],
-  ["PrototypeNotice", PrototypeNotice, {}, undefined],
-  ["MockSimulationNotice", MockSimulationNotice, {}, undefined],
 ];
 
 for (const [name, Component, props, children] of components) {
   try {
     renderToString(
-      createElement(StoreProvider, null, createElement(Component as never, props as never, children as never)),
+      createElement(ShipmentStoreProvider, null, createElement(Component as never, props as never, children as never)),
     );
     console.log(`ok    компонент ${name}`);
   } catch (error) {

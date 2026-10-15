@@ -1,418 +1,289 @@
-export type Role = "user" | "lawyer";
+// Domain types for the postal shipment prototype (docs/prototype2.md §13)
+// Based on ИС ЭПС API field names from docs/Pamyatka_API_*.pdf
 
-export type Participant = "user" | "ai" | "lawyer" | "counterparty" | "system";
+/** Тип отправителя: физическое лицо или юридическое лицо (ИП/UL). */
+export type SenderType = "fiz" | "ul";
+
+/** Тип получателя: физическое лицо или юридическое лицо. */
+export type RecipientType = "fiz" | "ul";
 
 /**
- * Основной этап дела (docs/prototype.md §26).
- * Дополнительные признаки (флаги) не заменяют этап, а сопровождают его.
+ * Адрес в виде структуры (AddressStruct из API Почты России).
+ * Используется для валидации и отображения отдельных полей.
  */
-export type CaseStage =
-  | "INTAKE"
-  | "INFO_COLLECTION"
-  | "ANALYSIS"
-  | "SOLUTION_CHOICE"
-  | "ACTION_EXECUTION"
-  | "AWAITING_RESULT"
-  | "CLAIM_PREPARATION"
-  | "CLAIM_APPROVAL"
-  | "SENT"
-  | "AWAITING_RESPONSE"
-  | "RESULT_ANALYSIS"
-  | "COURT_PREPARATION"
-  | "LAWYER_REVIEW"
-  | "CLOSED";
-
-/** Дополнительные признаки состояния (docs/prototype.md §26). */
-export type CaseFlag =
-  | "NEEDS_LAWYER"
-  | "WAITING_USER"
-  | "WAITING_COUNTERPARTY"
-  | "NEEDS_CLARIFICATION"
-  | "CONFLICT_DETECTED"
-  | "SEND_ERROR"
-  | "DEADLINE_REVIEW";
-
-export type FactState =
-  | "UNCONFIRMED"
-  | "CONFIRMED_BY_USER"
-  | "CONFIRMED_BY_DOCUMENT"
-  | "CONFLICT"
-  | "REQUIRES_LAWYER";
-
-export type FactSourceKind = "user_message" | "document" | "document_page" | "lawyer_message" | "counterparty" | "ai_analysis";
-
-export type DocumentKind = "receipt" | "photo" | "chat_log" | "claim" | "confirmation" | "counterparty_reply" | "other";
-
-export type DocumentStatus = "draft" | "confirmed" | "sent_demo" | "received" | "archived";
-
-export type Actor = "user" | "ai" | "lawyer" | "counterparty" | "system";
-
-export type FactKey =
-  | "product"
-  | "seller"
-  | "purchase_date"
-  | "price"
-  | "defect_description"
-  | "defect_found_date"
-  | "purchase_channel"
-  | "first_contact_date"
-  | "seller_response"
-  | "user_demand"
-  | "receipt_available"
-  | "user_name"
-  | "user_contact"
-  | "extra_costs"
-  | "device_model"
-  | "warranty_period";
-
-/** Источник факта — отдельная сущность, не часть самого факта (docs/prototype.md §9). */
-export interface FactSource {
-  id: string;
-  kind: FactSourceKind;
-  label: string;
-  documentId?: string;
-  page?: number;
-  messageId?: string;
+export interface AddressStruct {
+  postalCode?: string;
+  region?: string;
+  area?: string;
+  city?: string;
+  cityType?: string;
+  settlement?: string;
+  settlementType?: string;
+  street?: string;
+  streetType?: string;
+  houseNumber?: string;
+  corpus?: string;
+  stroenie?: string;
+  building?: string;
+  flat?: string;
+  office?: string;
+  entrance?: string;
+  floor?: string;
+  hostel?: string;
+  okatoCode?: string;
+  postalBox?: string;
+  militaryNumber?: string;
+  room?: string;
+  section?: string;
+  vladenie?: string;
+  /** Дополнительная информация в адресном блоке. */
+  additionalInfo?: string;
 }
 
-export interface CaseFact {
-  id: string;
-  caseId: string;
-  key: FactKey;
-  title: string;
-  value: string;
-  state: FactState;
-  /** Несколько источников, если одно значение подтверждено несколькими документами. */
-  sources: FactSource[];
-  /** Альтернативные значения при конфликте. AI не выбирает значение самостоятельно. */
-  conflict?: {
-    detectedAt: string;
-    variants: FactVariant[];
-  };
-  updatedAt: string;
-  /** Требуется уточнение у пользователя или юриста. */
-  requiresClarification?: boolean;
-}
-
-export interface FactVariant {
-  value: string;
-  source: FactSource;
-}
-
-export interface DocumentVersion {
-  version: number;
-  createdAt: string;
-  author: Actor;
-  note: string;
-}
-
-export interface CaseDocument {
-  id: string;
-  caseId: string;
+export interface Organization {
   name: string;
-  kind: DocumentKind;
-  status: DocumentStatus;
-  version: number;
-  createdAt: string;
-  origin: "user_upload" | "ai_generated" | "counterparty" | "system";
+  inn?: string;
+  kpp?: string;
+  ogrn?: string;
+}
+
+export interface Individual {
+  firstName: string;
+  lastName: string;
+  patronymic?: string;
+  inn?: string;
+  snils?: string;
+  /** Реквизиты документа, удостоверяющего личность. */
+  identityDocument?: {
+    series?: string;
+    number?: string;
+    issueDate?: string;
+    issuer?: string;
+  };
+}
+
+/**
+ * ФИАС-адрес отправителя. Может быть строкой или структурой (как в API).
+ * Формат строки: "644077, Омская обл., г. Омск, пр. Мира, д. 57, корп. 1, кв. 66"
+ */
+export interface Sender {
+  type: SenderType;
+  /** Код отправителя в ИС ЭПС (формат CODE_{ID}). */
+  code?: string;
+  /** Наименование или ФИО отправителя. */
+  name: string;
+  /** Электронная почта для уведомлений. */
+  email?: string;
+  /** Адрес в виде строки. */
+  addressString?: string;
+  /** Адрес в виде структуры. */
+  address?: AddressStruct;
+  /** Только для UL. */
+  organization?: Organization;
+  /** Только для ИП. */
+  individual?: Individual;
+}
+
+export interface Recipient {
+  type: RecipientType;
+  /** Код страны по ОКСМ (643 — Россия). */
+  countryCodeOKSM: number;
+  /** Адрес в виде строки. */
+  addressString: string;
+  /** Адрес в виде структуры. */
+  address?: AddressStruct;
+  /** Только для физического лица. */
+  person?: Individual;
+  /** Только для юридического лица. */
+  organization?: Organization;
+  /** Дополнительная информация в адресном блоке получателя. */
+  additionalInfo?: string;
+}
+
+/** Метаданные загруженного документа (PDF). Не сохраняем содержимое файла. */
+export interface DocumentAttachment {
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
   pageCount?: number;
-  versions: DocumentVersion[];
-  /** Предварительно подготовленный текст для mock-просмотрщика. */
-  content: DocumentContent;
-  /** Факты, использованные при подготовке документа. */
-  basedOnFactIds?: string[];
+  uploadedAt: string;
 }
 
-export interface DocumentContent {
-  title: string;
-  blocks: DocumentBlock[];
-  attachments?: string[];
-}
+/**
+ * Статусы отправления — состояния UI-прототипа.
+ * Не выдаются за точный перечень кодов или статусов ИС ЭПС.
+ */
+export type ShipmentStatus =
+  | "DRAFT"
+  | "PREPARED"
+  | "SENDING"
+  | "ACCEPTED"
+  | "IN_TRANSIT"
+  | "DELIVERED"
+  | "REQUIRES_ATTENTION";
 
-export type DocumentBlock =
-  | { kind: "paragraph"; text: string }
-  | { kind: "heading"; text: string }
-  | { kind: "list"; items: string[] }
-  | { kind: "kv"; rows: Array<{ label: string; value: string }> };
+/**
+ * Статусы, используемые в API ИС ЭПС (из документации).
+ * Используются для привязки демонстрационных статусов к понятиям API.
+ */
+export type ApiStatus = "UNKNOWN" | "ACCEPTED" | "IN_PROGRESS" | "ONLINE_DELIVERED" | "DELIVERED_TO_PRINT" | "FAILED";
 
-export interface Message {
+/** Подстатус для статуса IN_PROGRESS. */
+export type ApiSubStatus = "VALIDATION" | "DELIVERY";
+
+/**
+ * Коды разряда почтового отправления (из API): 4 — судебное, 8 — административное,
+ * 0 — другие. Используются для справки в интерфейсе.
+ */
+export type MailRank = 4 | 8 | 0;
+
+/** Тип отправления: простое (REGULAR) или заказное (REGISTERED). */
+export type ShipmentType = "REGULAR" | "REGISTERED";
+
+/**
+ * Событие в истории отправления.
+ * Каждое событие содержит дату, описание, инициатора и пометку "демонстрационное".
+ */
+export interface ShipmentEvent {
   id: string;
-  caseId: string;
-  author: Participant;
-  text: string;
-  timestamp: string;
-  /** Ссылки на факты, документы и события, на которые опирается сообщение. */
-  factRefs?: string[];
-  documentRefs?: string[];
-  tone?: "info" | "question" | "warning" | "success";
-}
-
-export type TaskStatus = "open" | "done" | "cancelled";
-
-export interface Task {
-  id: string;
-  caseId: string;
-  title: string;
-  description?: string;
-  assignee: Actor;
-  status: TaskStatus;
-  dueDate?: string;
-  createdAt: string;
-  completedAt?: string;
-  result?: string;
-}
-
-export type EventKind =
-  | "case_created"
-  | "interview_started"
-  | "interview_completed"
-  | "facts_structured"
-  | "recommendation_given"
-  | "action_selected"
-  | "task_created"
-  | "task_completed"
-  | "document_generated"
-  | "document_confirmed"
-  | "document_sent"
-  | "counterparty_responded"
-  | "result_rejected"
-  | "court_preparation_started"
-  | "transferred_to_lawyer"
-  | "lawyer_message"
-  | "user_message"
-  | "fact_updated"
-  | "lawyer_decision"
-  | "case_closed"
-  | "note";
-
-export interface CaseEvent {
-  id: string;
-  caseId: string;
-  kind: EventKind;
+  shipmentId: string;
+  type: ShipmentEventType;
   title: string;
   description?: string;
   date: string;
   timestamp: string;
-  initiator: Actor;
-  sourceLabel?: string;
-  documentRefs?: string[];
-  factRefs?: string[];
+  /** Инициатор события. */
+  initiator: ShipmentActor;
+  /** Пометка "демонстрационное" для симулированных событий. */
+  isDemo: boolean;
 }
 
-/** Ожидаемое событие объясняет, почему дело находится в текущем состоянии (§11, §27). */
+export type ShipmentActor = "user" | "system" | "recipient" | "post";
+
+export type ShipmentEventType =
+  | "document_added"
+  | "sender_filled"
+  | "recipient_filled"
+  | "shipment_verified"
+  | "shipment_sent"
+  | "accepted_by_system"
+  | "in_transit"
+  | "delivered"
+  | "attention_required";
+
+/**
+ * Ожидаемое событие объясняет, почему отправление находится в текущем состоянии.
+ */
 export interface ExpectedEvent {
   id: string;
   title: string;
   description?: string;
-  responsible: Actor;
+  responsible: ShipmentActor;
   deadline?: string;
-  /** Кнопка, позволяющая сообщить о наступившем событии. */
-  actionId?: ActionId;
 }
-
-export type RecommendationKind = "peacful_resolution" | "claim" | "lawyer" | "self_service" | "close";
-
-export interface RecommendationReason {
-  text: string;
-  factIds?: string[];
-  documentIds?: string[];
-  eventIds?: string[];
-}
-
-export interface Recommendation {
-  id: string;
-  caseId: string;
-  title: string;
-  kind: RecommendationKind;
-  description: string;
-  /** Пояснение, почему предложен этот вариант (docs/prototype.md §8). */
-  reasons: RecommendationReason[];
-  actionId: ActionId;
-  recommended?: boolean;
-  createdAt: string;
-  /** Формулировки AI ограничены: оценка результата не гарантируется. */
-  disclaimer?: string;
-}
-
-export type ActionId =
-  | "START_INTERVIEW"
-  | "RESTART_INTERVIEW"
-  | "VIEW_FACTS"
-  | "CHOOSE_PEACEFUL"
-  | "CHOOSE_CLAIM"
-  | "CHOOSE_LAWYER"
-  | "START_CLAIM"
-  | "CONFIRM_CLAIM"
-  | "MOCK_SEND"
-  | "REPORT_PEACEFUL_RESULT"
-  | "REPORT_COUNTERPARTY_RESPONSE"
-  | "REVIEW_COUNTERPARTY_REPLY"
-  | "CLAIM_NOT_SATISFIED"
-  | "START_COURT_PREP"
-  | "TRANSFER_TO_LAWYER"
-  | "SEND_MOCK_CONTRADICTION_CLARIFICATION"
-  | "ANSWER_LAWYER"
-  | "SEND_LAWYER_MESSAGE"
-  | "APPLY_LAWYER_DECISION"
-  | "CLOSE_CASE";
-
-export type ActionVariant = "primary" | "secondary" | "danger";
-
-export interface CaseAction {
-  id: ActionId;
-  label: string;
-  description?: string;
-  variant: ActionVariant;
-  /** Действие доступно только в определённых ролях. */
-  roles: Role[];
-  /** Действие требует подтверждения пользователем. */
-  confirm?: {
-    title: string;
-    message: string;
-    confirmLabel: string;
-  };
-  /** Наличие вопроса с вариантами ответов. */
-  form?: ActionForm;
-}
-
-export type ActionFormFieldType = "choice" | "text";
-
-export interface ActionFormField {
-  id: string;
-  label: string;
-  type: ActionFormFieldType;
-  options?: Array<{ value: string; label: string }>;
-  placeholder?: string;
-}
-
-export interface ActionForm {
-  title: string;
-  description?: string;
-  fields: ActionFormField[];
-}
-
-export type LawyerDecisionType =
-  | "approve_continuation"
-  | "request_data"
-  | "return_to_user"
-  | "close_case"
-  | "other";
-
-export interface LawyerDecision {
-  id: string;
-  caseId: string;
-  type: LawyerDecisionType;
-  title: string;
-  comment: string;
-  lawyerName: string;
-  createdAt: string;
-  /** Запрошенные у пользователя данные. */
-  requestedItems?: Array<{ id: string; label: string; factId?: string }>;
-}
-
-export type OutcomeReason =
-  | "resolved"
-  | "user_closed"
-  | "lawyer_closed"
-  | "counterparty_declined"
-  | "deadline_expired";
-
-export interface CaseOutcome {
-  result: "solved" | "not_solved" | "closed";
-  reason: OutcomeReason;
-  title: string;
-  comment?: string;
-  closedAt: string;
-}
-
-export interface CaseUser {
-  id: string;
-  name: string;
-  role: Role;
-  title: string;
-  organization?: string;
-  email?: string;
-  phone?: string;
-  note?: string;
-}
-
-export interface CaseParty {
-  name: string;
-  address: string;
-  inn?: string;
-}
-
-export type CasePriority = "normal" | "high" | "urgent";
-
-export type LawyerQueueStatus = "new" | "in_progress" | "needs_attention" | "resolved";
 
 /**
- * Юридическое дело — центральный объект приложения (docs/prototype.md §5).
- * Все вложенные коллекции принадлежат делу и позволяют восстановить его состояние.
+ * Почтовое отправление — центральный объект приложения (docs/prototype2.md §5).
  */
-export interface Case {
+export interface Shipment {
+  /** Внутренний идентификатор. */
   id: string;
-  number: string;
-  title: string;
-  category: string;
-  summary: string;
-  situation: string;
-  userId: string;
-  counterparty: string;
-  stage: CaseStage;
-  flags: CaseFlag[];
+  /** Условный идентификатор отправления (synthetic). */
+  requestCode: string;
+  /** ШПИ — Штриховой Почтовый Идентификатор (synthetic). */
+  mailId?: string;
+  /** Информация об отправителе. */
+  sender: Sender;
+  /** Информация о получателе. */
+  recipient: Recipient;
+  /** Метаданные документа. */
+  document: DocumentAttachment;
+  /** Статус отправления. */
+  status: ShipmentStatus;
+  /** Статус из API ИС ЭПС (для справки). */
+  apiStatus?: ApiStatus;
+  /** Подстатус из API. */
+  apiSubStatus?: ApiSubStatus;
+  /** Дата создания. */
   createdAt: string;
+  /** Дата последнего изменения. */
   updatedAt: string;
-  interviewCompletedAt?: string;
-  priority: CasePriority;
-  transferReason?: string;
-  transferredAt?: string;
-  assignedLawyerId?: string;
+  /** История событий. */
+  events: ShipmentEvent[];
+  /** Признак демонстрационных данных. */
+  isDemo: boolean;
+  /** Ожидаемое событие. */
   expectedEvent?: ExpectedEvent;
-  facts: CaseFact[];
-  documents: CaseDocument[];
-  messages: Message[];
-  tasks: Task[];
-  events: CaseEvent[];
-  recommendations: Recommendation[];
-  lawyerDecisions: LawyerDecision[];
-  outcome?: CaseOutcome;
-  /** Собранные ответы mock-интервью. */
-  interviewAnswers?: InterviewAnswer[];
-  /** Проблемные места, выявленные AI или юристом. */
-  issues?: CaseIssue[];
-  queueStatus?: LawyerQueueStatus;
+  /** Код разряда (4 — судебное, 8 — административное). */
+  mailRank?: MailRank;
+  /** Тип отправления. */
+  shipmentType?: ShipmentType;
 }
 
-export interface CaseIssue {
+/**
+ * Черновик отправления — состояние незавершённого мастера.
+ * Сохраняется в localStorage.
+ */
+export interface ShipmentDraft {
   id: string;
-  text: string;
-  severity: "warning" | "info";
-  factId?: string;
-  raisedBy: Actor;
+  /** Дата создания. */
+  createdAt: string;
+  /** Дата последнего изменения. */
+  updatedAt: string;
+  /** Текущий шаг мастера (0-based индекс). */
+  currentStep: number;
+  /** Этапы, завершённые пользователем. */
+  completedSteps: number[];
+  /** Данные отправителя. */
+  sender?: Sender;
+  /** Данные получателя. */
+  recipient?: Recipient;
+  /** Данные документа. */
+  document?: DocumentAttachment;
 }
 
-export interface InterviewAnswer {
-  questionId: string;
+/** Шаги мастера создания отправления. */
+export type WizardStep = "document" | "sender_recipient" | "verification" | "sending";
+
+export const WIZARD_STEPS: WizardStep[] = ["document", "sender_recipient", "verification", "sending"];
+
+/** Настройки уведомлений пользователя. */
+export type NotificationSetting = "all" | "important" | "none";
+
+/** Профиль отправителя (локальные настройки). */
+export interface SenderProfile {
+  type: SenderType;
+  name: string;
+  email: string;
+  organization?: Organization;
+  individual?: Individual;
+  addressString?: string;
+  address?: AddressStruct;
+  notificiations: NotificationSetting;
+  /** Пометка о том, что профиль демонстрационный. */
+  isDemo: boolean;
+}
+
+/** Варианты действий кнопок в UI. */
+export type ActionVariant = "primary" | "secondary" | "danger";
+
+/** Источник данных для факта (docs/prototype2.md §9). */
+export interface DataFact {
+  id: string;
+  label: string;
   value: string;
-  answeredAt: string;
+  source: "user_input" | "profile" | "demo_data" | "document";
 }
 
-export interface InterviewQuestion {
+/** Противоречие в данных (docs/prototype2.md §10). */
+export interface DataConflict {
   id: string;
-  text: string;
-  factKey: FactKey;
-  /** Варианты ответа. Пустой массив — свободный ввод. */
-  options: Array<{ value: string; label: string }>;
-  /** Значение, которое считается «достаточным» для формирования факта. */
-  expectedValue?: string;
-  /** Признак того, что ответ нужно сопоставить с документом и проверить на конфликт. */
-  conflictsWithDocument?: boolean;
-  aiFollowUp?: string;
-}
-
-export interface InterviewScript {
-  intro: string[];
-  closing: string[];
-  questions: InterviewQuestion[];
+  field: string;
+  variants: Array<{
+    value: string;
+    source: string;
+  }>;
+  /** Когда обнаружено. */
+  detectedAt: string;
 }
