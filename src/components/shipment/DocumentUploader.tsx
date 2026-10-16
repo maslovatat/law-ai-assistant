@@ -83,19 +83,19 @@ export function DocumentUploader({ document, onUpload, onRemove, error }: Docume
 
   if (document) {
     return (
-      <div className="upload-result">
-        <div className="upload-result__info">
+      <div className="row row--between" style={{ alignItems: "center", gap: "var(--space-2)" }}>
+        <div className="upload-result__info" style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flex: 1, minWidth: 0 }}>
           <div className="upload-result__icon">📄</div>
-          <div>
-            <strong>{document.name}</strong>
-            <div className="card__meta">
+          <div style={{ minWidth: 0 }}>
+            <strong style={{ display: "block" }}>{document.name}</strong>
+            <div className="card__meta" style={{ fontSize: "12px" }}>
               {document.mimeType} · {formatBytes(document.size)}
               {document.pageCount ? ` · ${document.pageCount} стр.` : ""}
             </div>
           </div>
         </div>
         {error || localError ? (
-          <div className="error" style={{ marginTop: "var(--space-2)" }}>
+          <div className="error" style={{ fontSize: "12px" }}>
             {error || localError}
           </div>
         ) : null}

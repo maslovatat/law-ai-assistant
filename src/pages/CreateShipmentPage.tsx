@@ -34,18 +34,28 @@ export function CreateShipmentPage() {
   const draftId = searchParams.get("draft");
   const { state, dispatch, getDraft } = useStore();
 
+  const profile = state.senderProfile;
+
   const [currentStep, setCurrentStep] = useState(0);
+  const [editDraftId, setEditDraftId] = useState<string | null>(null);
   const [document, setDocument] = useState<DocumentAttachment | undefined>(undefined);
-  const [sender, setSender] = useState<Partial<Sender>>({});
-  const [recipient, setRecipient] = useState<Partial<Recipient>>({});
+  const [sender, setSender] = useState<Partial<Sender>>({
+    name: profile.name,
+    email: profile.email,
+    type: profile.type,
+    organization: profile.organization,
+    individual: profile.individual,
+    address: profile.address,
+    addressString: profile.addressString,
+  });
+  const [recipient, setRecipient] = useState<Partial<Recipient>>({ type: "fiz" });
   const [verificationChecked, setVerificationChecked] = useState(false);
   const [sendingPhase, setSendingPhase] = useState<SendingPhase>("idle");
   const [submissionResult, setSubmissionResult] = useState<ActionOutcome<Shipment> | null>(null);
 
-  const profile = state.senderProfile;
-
   useEffect(() => {
-    if (draftId) {
+    if (draftId && draftId !== editDraftId) {
+      setEditDraftId(draftId);
       const draft = getDraft(draftId);
       if (draft) {
         setCurrentStep(draft.currentStep);
@@ -55,20 +65,33 @@ export function CreateShipmentPage() {
         dispatch({ type: "dismissNotice" });
       }
     }
-  }, [draftId, getDraft, dispatch]);
+  }, [draftId, editDraftId, getDraft, dispatch]);
 
   const saveDraft = useCallback(() => {
-    dispatch({
-      type: "saveDraft",
-      draft: {
-        currentStep,
-        completedSteps: Array.from({ length: currentStep }, (_, i) => i),
-        document,
-        sender: sender.name ? (sender as Sender) : undefined,
-        recipient: recipient.type ? (recipient as Recipient) : undefined,
-      },
-    });
-  }, [dispatch, currentStep, document, sender, recipient]);
+    const draftData = {
+      currentStep,
+      completedSteps: Array.from({ length: currentStep }, (_, i) => i),
+      document,
+      sender:
+        sender.name || sender.individual?.lastName
+          ? (sender as Sender)
+          : undefined,
+      recipient: recipient.type ? (recipient as Recipient) : undefined,
+    };
+    if (editDraftId) {
+      dispatch({
+        type: "saveDraft",
+        draft: { ...draftData, id: editDraftId } as ShipmentDraft,
+      });
+    } else {
+      const created = shipmentService.createDraft(draftData);
+      setEditDraftId(created.id);
+      dispatch({
+        type: "saveDraft",
+        draft: created,
+      });
+    }
+  }, [dispatch, currentStep, document, sender, recipient, editDraftId]);
 
   const handleNext = () => {
     if (currentStep < WIZARD_STEPS.length - 1) {
@@ -88,10 +111,21 @@ export function CreateShipmentPage() {
     switch (currentStep) {
       case 0:
         return Boolean(document);
-      case 1:
-        return Boolean(sender.name && recipient.type && recipient.addressString);
+      case 1: {
+        const hasSender = Boolean(sender.name || sender.individual?.lastName);
+        const hasRecipient =
+          Boolean(recipient.type) &&
+          Boolean(
+            recipient.addressString ||
+              recipient.person?.lastName ||
+              recipient.organization?.name
+          );
+        return Boolean(hasSender && hasRecipient);
+      }
       case 2:
         return verificationChecked;
+      case 3:
+        return Boolean(document && sender.name && recipient.type && recipient.addressString);
       default:
         return false;
     }
@@ -264,7 +298,12 @@ export function CreateShipmentPage() {
         <SenderForm
           sender={sender}
           onChange={setSender}
-          profileSource={sender.name === profile?.name && Boolean(profile)}
+          profileSource={
+            Boolean(sender.name || sender.individual?.lastName) &&
+            (sender.name === profile?.name ||
+              (sender.type === "fiz" && sender.individual?.lastName === profile?.individual?.lastName)) &&
+            Boolean(profile)
+          }
         />
         <RecipientForm recipient={recipient} onChange={setRecipient} />
       </div>
@@ -272,24 +311,12 @@ export function CreateShipmentPage() {
   }
 
   function renderVerificationStep(): ReactNode {
-    const isReady = Boolean(sender.name && recipient.type && recipient.addressString);
     return (
       <ShipmentSummary
         data={{ document, sender: sender as Sender, recipient: recipient as Recipient }}
         profile={profile}
         verificationChecked={verificationChecked}
         onVerificationChange={setVerificationChecked}
-        actions={
-          isReady ? (
-            <button type="button" className="btn btn--primary" onClick={handleNext} disabled={!verificationChecked}>
-              Далее к отправке
-            </button>
-          ) : (
-            <Link to="/create" className="btn btn--primary">
-              Заполнить данные
-            </Link>
-          )
-        }
       />
     );
   }
@@ -298,10 +325,7 @@ export function CreateShipmentPage() {
     if (sendingPhase === "idle") {
       return (
         <div className="stack stack--tight">
-          <p>Нажмите кнопку ниже, чтобы начать демонстрационную отправку.</p>
-          <button type="button" className="btn btn--primary" onClick={handleSend} disabled={!verificationChecked}>
-            Отправить демонстрационно
-          </button>
+          <p>Нажмите кнопку «Отправить демонстрационно» внизу страницы, чтобы начать.</p>
         </div>
       );
     }

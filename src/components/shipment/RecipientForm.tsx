@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Recipient } from "../../types/domain";
 
 interface RecipientFormProps {
@@ -13,6 +13,10 @@ interface RecipientFormProps {
  */
 export function RecipientForm({ recipient, onChange, errors }: RecipientFormProps) {
   const [type, setType] = useState<Recipient["type"]>(recipient.type ?? "fiz");
+
+  useEffect(() => {
+    setType(recipient.type ?? "fiz");
+  }, [recipient.type]);
 
   const handleTypeChange = (newType: Recipient["type"]) => {
     setType(newType);
@@ -71,6 +75,9 @@ export function RecipientForm({ recipient, onChange, errors }: RecipientFormProp
               checked={type === "ul"}
               onChange={() => handleTypeChange("ul")}
             />
+            <div className="choice__content">
+              <div className="choice__label">Юридическое лицо</div>
+            </div>
           </label>
         </div>
       </fieldset>

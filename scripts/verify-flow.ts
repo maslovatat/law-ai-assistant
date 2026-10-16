@@ -84,11 +84,18 @@ check("seed-отправления созданы", shipments.length > 0, `${shi
 const draftsBefore = shipmentService.getDrafts();
 check("черновики загружены", draftsBefore.length >= 0);
 
-const draftId = `draft-test-${Date.now()}`;
-void draftId;
 const createdDraft = shipmentService.createDraft(draft);
 check("черновик создан с ID", createdDraft.id.startsWith("draft-"));
 check("через createDraft черновик сохранён", shipmentService.getDrafts().length > draftsBefore.length);
+
+const countAfterCreate = shipmentService.getDrafts().length;
+// Повторное сохранение того же черновика по ID не должно дублировать его
+shipmentService.saveDraft({ ...createdDraft, updatedAt: todayString() });
+check(
+  "повторное сохранение по ID не дублирует черновик",
+  shipmentService.getDrafts().length === countAfterCreate,
+  `${shipmentService.getDrafts().length} vs ${countAfterCreate}`,
+);
 
 const retrieved = shipmentService.getDraft(createdDraft.id);
 check("черновик находим по ID", retrieved?.id === createdDraft.id);

@@ -466,6 +466,18 @@
   border-bottom: none;
 }
 
+.shipment-row {
+  transition: background 120ms ease;
+}
+
+.shipment-row:hover {
+  background: var(--color-surface-muted);
+}
+
+.shipment-row td {
+  white-space: nowrap;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

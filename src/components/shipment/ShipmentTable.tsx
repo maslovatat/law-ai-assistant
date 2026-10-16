@@ -1,4 +1,5 @@
 import { useStore } from "../../app/ShipmentStore";
+import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "./StatusBadge";
 import { shipmentStatusLabels } from "../../types/labels";
 import type { Shipment, ShipmentStatus } from "../../types/domain";
@@ -43,6 +44,7 @@ export function ShipmentTable({
   showControls = true,
 }: ShipmentTableProps) {
   const { state, searchShipments, filterShipmentsByStatus } = useStore();
+  const navigate = useNavigate();
 
   const result = query.trim()
     ? searchShipments(query)
@@ -99,12 +101,16 @@ export function ShipmentTable({
                 <th style={{ width: "25%" }}>Получатель</th>
                 <th style={{ width: "12%" }}>Дата</th>
                 <th style={{ width: "13%" }}>Статус</th>
-                <th style={{ width: "20%" }}>Идентификатор</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((s) => (
-                <tr key={s.id}>
+                <tr
+                  key={s.id}
+                  className="shipment-row"
+                  onClick={() => navigate(`/shipments/${s.id}`)}
+                  style={{ cursor: "pointer" }}
+                >
                   <td>
                     <div className="small muted">{s.document?.name ?? "—"}</div>
                     {s.isDemo ? <div className="badge badge--demo small">демо</div> : null}
@@ -116,9 +122,6 @@ export function ShipmentTable({
                   <td className="small muted">{s.createdAt}</td>
                   <td>
                     <StatusBadge status={s.status} />
-                  </td>
-                  <td className="small muted mono-num">
-                    {s.mailId || s.requestCode}
                   </td>
                 </tr>
               ))}

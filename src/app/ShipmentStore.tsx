@@ -28,7 +28,7 @@ export interface AppState {
 export type StateAction =
   | { type: "init" }
   | { type: "dismissNotice" }
-  | { type: "saveDraft"; draft: Omit<ShipmentDraft, "id" | "createdAt" | "updatedAt"> }
+  | { type: "saveDraft"; draft: Omit<ShipmentDraft, "id" | "createdAt" | "updatedAt"> & { id?: string } }
   | { type: "deleteDraft"; id: string }
   | { type: "openDraft"; id: string }
   | {
@@ -79,7 +79,11 @@ function reducer(state: AppState, action: StateAction): AppState {
       return { ...state, notice: undefined };
 
     case "saveDraft": {
-      shipmentService.createDraft(action.draft);
+      if (action.draft.id) {
+        shipmentService.saveDraft(action.draft as ShipmentDraft);
+      } else {
+        shipmentService.createDraft(action.draft);
+      }
       return {
         ...state,
         drafts: shipmentService.getDrafts(),
