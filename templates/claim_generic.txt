@@ -1,0 +1,31 @@
+> {recipient_name}
+> Адрес: {recipient_address}
+> {?recipient_details_line}
+
+> от {applicant_name}
+> Адрес: {applicant_address}
+> {?phone_line}
+
+# Претензия
+
+{event_date} произошли следующие события: {description}
+{?amount_line}
+
+## Хронология событий
+{chronology}
+
+## Правовое обоснование
+{legal_grounds}
+
+## Требования
+На основании изложенного требую {requirement_text} в срок до {deadline_date}.
+
+Если требование не будет исполнено в указанный срок, я обращусь в суд.
+
+## Приложения
+{attachments}
+
+Дата: {date_today}
+{?place_line}
+
+Подпись: ____________________ / {applicant_name} /

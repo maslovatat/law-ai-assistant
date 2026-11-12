@@ -1,0 +1,32 @@
+> {recipient_name}
+> Адрес: {recipient_address}
+> {?recipient_details_line}
+
+> от {applicant_name}
+> Адрес: {applicant_address}
+> {?phone_line}
+
+# Претензия
+
+{contract_date} между мной, {applicant_name}, и {contractor_name} возникли отношения по выполнению работ (оказанию услуги): {service}. Стоимость: {price}.
+
+Работа выполнена с недостатками: {defect}.
+
+## Хронология событий
+{chronology}
+
+## Правовое обоснование
+{legal_grounds}
+
+## Требования
+На основании изложенного требую {requirement_text} в срок до {deadline_date}.
+
+Если требование не будет исполнено в указанный срок, я обращусь в суд.
+
+## Приложения
+{attachments}
+
+Дата: {date_today}
+{?place_line}
+
+Подпись: ____________________ / {applicant_name} /

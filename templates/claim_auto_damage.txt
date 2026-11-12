@@ -1,0 +1,34 @@
+> {recipient_name}
+> {?recipient_address_line}
+> {?recipient_details_line}
+
+> от {applicant_name}
+> Адрес: {applicant_address}
+> {?phone_line}
+
+# Претензия
+
+{incident_date} по адресу: {incident_place} принадлежащему мне автомобилю были причинены повреждения: {damage_description}.
+
+Сведения о втором транспортном средстве: {counterpart_vehicle}.
+
+Размер ущерба по оценке заявителя: {damage_amount}.
+
+## Хронология событий
+{chronology}
+
+## Правовое обоснование
+{legal_grounds}
+
+## Требования
+На основании изложенного требую {requirement_text} в срок до {deadline_date}.
+
+Если требование не будет исполнено в указанный срок, я обращусь в суд.
+
+## Приложения
+{attachments}
+
+Дата: {date_today}
+{?place_line}
+
+Подпись: ____________________ / {applicant_name} /
